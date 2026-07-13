@@ -1,31 +1,51 @@
-# 给定两个扭结的 PD_CODE
-# 计算他们连通和的 PD_CODE
+"""Derive incoming and outgoing incidences for canonically labelled PD codes."""
 
-def __status_reverse(status: str):
-    assert status in ["IN", "OUT"] and status is not None
-    if status == "IN":
-        return "OUT" # 获得出入状态的相反相态
-    else:
-        return "IN"
+from collections import Counter
 
-def __get_next(total_n:int, val_now:int) -> int:
-    if val_now == total_n:
-        return 1
-    else:
-        return val_now + 1
 
-def get_in_out_code(pd_code:list) -> list:
-    total_n = len(pd_code) * 2
-    in_out_code = []
-    for idx in range(len(pd_code)): # 第一个弧线一定是 IN,第三个弧线一定是 OUT
-        in_out_code.append(["IN", None, "OUT", None])
-        if pd_code[idx][1] == __get_next(total_n, pd_code[idx][3]):
-            in_out_code[-1][1] = "OUT"
-            in_out_code[-1][3] = "IN"
+def _successor(label: int, maximum: int) -> int:
+    return 1 if label == maximum else label + 1
+
+
+def _validate_canonical_pd_code(pd_code: list[list[int]]) -> int:
+    if not isinstance(pd_code, list):
+        raise TypeError("pd_code must be a list")
+
+    labels: list[int] = []
+    for crossing in pd_code:
+        if not isinstance(crossing, list) or len(crossing) != 4:
+            raise ValueError("every crossing must be a four-item list")
+        for label in crossing:
+            if isinstance(label, bool) or not isinstance(label, int):
+                raise TypeError("arc labels must be integers")
+            labels.append(label)
+
+    maximum = 2 * len(pd_code)
+    counts = Counter(labels)
+    if set(counts) != set(range(1, maximum + 1)) or any(count != 2 for count in counts.values()):
+        raise ValueError("labels must be exactly 1..2n and each label must occur twice")
+    return maximum
+
+
+def get_in_out_code(pd_code: list[list[int]]) -> list[list[str]]:
+    """Return `IN`/`OUT` states for each incidence in a canonical PD code.
+
+    The first and third entries of each crossing follow the PD convention
+    directly. The orientation of the second/fourth pair is determined by
+    which label is the cyclic successor of the other.
+    """
+
+    maximum = _validate_canonical_pd_code(pd_code)
+    states: list[list[str]] = []
+    for _, second, _, fourth in pd_code:
+        if second == _successor(fourth, maximum):
+            states.append(["IN", "OUT", "OUT", "IN"])
+        elif fourth == _successor(second, maximum):
+            states.append(["IN", "IN", "OUT", "OUT"])
         else:
-            in_out_code[-1][1] = "IN"
-            in_out_code[-1][3] = "OUT"
-    return in_out_code
+            raise ValueError("the second and fourth labels must be consecutive along the oriented component")
+    return states
+
 
 if __name__ == "__main__":
-    print(get_in_out_code([[4,1,5,2],[15,1,16,22],[10,4,11,3],[2,12,3,11],[9,16,10,17],[7,18,8,19],[17,8,18,9],[19,12,20,13],[5,15,6,14],[13,20,14,21],[21,6,22,7]]))
+    print(get_in_out_code([[1, 5, 2, 4], [3, 1, 4, 6], [5, 3, 6, 2]]))
