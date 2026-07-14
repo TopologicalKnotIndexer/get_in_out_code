@@ -41,3 +41,16 @@ Only Python 3.10 or newer and the standard library are required. Run:
 python -m unittest discover -s tests -v
 ```
 
+## Citation
+
+If you use this repository in academic work, please cite it as:
+
+```bibtex
+@software{topologicalknotindexer_get_in_out_code,
+  author = {{TopologicalKnotIndexer contributors}},
+  title = {{get\_in\_out\_code}},
+  year = {2026},
+  url = {https://github.com/TopologicalKnotIndexer/get_in_out_code}
+}
+```
+
